@@ -147,32 +147,36 @@ public class DownloadFileFromS3Task extends AWSAntTask {
     }
 
     public void execute() {
-        AmazonS3Client client = getOrCreateClient(AmazonS3Client.class);
-        if (key != null) {
-            File targetFile = file == null ? new File(key) : file;
-            downloadObjectToFile(client, targetFile, key);
-        } else {
-            ObjectListing objectListing = client.listObjects(bucketName);
-
-            while (true) {
-                for (Iterator<?> iterator = objectListing.getObjectSummaries()
-                        .iterator(); iterator.hasNext();) {
-                    S3ObjectSummary objectSummary = (S3ObjectSummary) iterator
-                            .next();
-                    String key = objectSummary.getKey();
-                    if (key.startsWith(keyPrefix)) {
-                        downloadObjectToFile(client, new File(dir
-                                + File.pathSeparator + key), key);
-                    }
-                }
-
-                if (objectListing.isTruncated()) {
-                    objectListing = client
-                            .listNextBatchOfObjects(objectListing);
-                } else {
-                    break;
-                }
-            }
+        AmazonS3Client client = createClient(AmazonS3Client.class);
+        try {
+	        if (key != null) {
+	            File targetFile = file == null ? new File(key) : file;
+	            downloadObjectToFile(client, targetFile, key);
+	        } else {
+	            ObjectListing objectListing = client.listObjects(bucketName);
+	
+	            while (true) {
+	                for (Iterator<?> iterator = objectListing.getObjectSummaries()
+	                        .iterator(); iterator.hasNext();) {
+	                    S3ObjectSummary objectSummary = (S3ObjectSummary) iterator
+	                            .next();
+	                    String key = objectSummary.getKey();
+	                    if (key.startsWith(keyPrefix)) {
+	                        downloadObjectToFile(client, new File(dir
+	                                + File.pathSeparator + key), key);
+	                    }
+	                }
+	
+	                if (objectListing.isTruncated()) {
+	                    objectListing = client
+	                            .listNextBatchOfObjects(objectListing);
+	                } else {
+	                    break;
+	                }
+	            }
+	        }
+        } finally {
+        	client.shutdown();
         }
     }
 }
