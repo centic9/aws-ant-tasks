@@ -162,7 +162,7 @@ public class UploadFileSetToS3Task extends AWSAntTask {
                                     + "/"
                                     + upload.getProgress()
                                             .getTotalBytesToTransfer()
-                                    + " bytes transferred...\r");
+                                    + " bytes of " + file.getName() + " transferred...\r");
                             Thread.sleep(statusUpdatePeriodInMs);
                         }
                         System.out.print(upload.getProgress()
@@ -170,7 +170,7 @@ public class UploadFileSetToS3Task extends AWSAntTask {
                                     + "/"
                                     + upload.getProgress()
                                             .getTotalBytesToTransfer()
-                                    + " bytes transferred...\n");
+                                    + " bytes of " + file.getName() + " transferred...\n");
                     } else {
                         upload.waitForCompletion();
                     }
