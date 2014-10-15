@@ -31,7 +31,7 @@ import com.amazonaws.services.s3.transfer.Upload;
  * Ant Task for uploading a fileset or filesets to S3.
  */
 public class UploadFileSetToS3Task extends AWSAntTask {
-    private Vector<FileSet> filesets = new Vector<FileSet>();
+	private Vector<FileSet> filesets = new Vector<FileSet>();
     private String bucketName;
     private String keyPrefix;
     private boolean printStatusUpdates = false;
@@ -136,57 +136,57 @@ public class UploadFileSetToS3Task extends AWSAntTask {
     @Override
 	public void execute() {
         checkParameters();
-        TransferManager transferManager;
-        if (awsSecretKey != null && awsAccessKeyId != null) {
-            transferManager = new TransferManager(getOrCreateClient(AmazonS3Client.class));
-        } else {
-            transferManager = new TransferManager();
-        }
         for (FileSet fileSet : filesets) {
             DirectoryScanner directoryScanner = fileSet.getDirectoryScanner(getProject());
             String[] includedFiles = directoryScanner.getIncludedFiles();
-            try {
-                for (String includedFile : includedFiles) {
-                    File base = directoryScanner.getBasedir();
-                    File file = new File(base, includedFile);
-                    String key = keyPrefix + file.getName();
-                    try {
-                        System.out.println("Uploading file " + file.getName()
-                                + "...");
-                        Upload upload = transferManager.upload(bucketName, key, file);
-                        if (printStatusUpdates) {
-                            while (!upload.isDone()) {
-                                System.out.print(upload.getProgress()
-                                        .getBytesTransferred()
-                                        + "/"
-                                        + upload.getProgress()
-                                                .getTotalBytesToTransfer()
-                                        + " bytes transferred...\r");
-                                Thread.sleep(statusUpdatePeriodInMs);
-                            }
+
+            for (String includedFile : includedFiles) {
+            	TransferManager transferManager;
+            	if (awsSecretKey != null && awsAccessKeyId != null) {
+            		transferManager = new TransferManager(createClient(AmazonS3Client.class));
+            	} else {
+            		transferManager = new TransferManager();
+            	}
+
+            	File base = directoryScanner.getBasedir();
+                File file = new File(base, includedFile);
+                String key = keyPrefix + file.getName();
+                try {
+                    System.out.println("Uploading file " + file.getName()
+                            + " to " + bucketName + " - " + key + "...");
+                    Upload upload = transferManager.upload(bucketName, key, file);
+                    if (printStatusUpdates) {
+                        while (!upload.isDone()) {
                             System.out.print(upload.getProgress()
-                                        .getBytesTransferred()
-                                        + "/"
-                                        + upload.getProgress()
-                                                .getTotalBytesToTransfer()
-                                        + " bytes transferred...\n");
-                        } else {
-                            upload.waitForCompletion();
+                                    .getBytesTransferred()
+                                    + "/"
+                                    + upload.getProgress()
+                                            .getTotalBytesToTransfer()
+                                    + " bytes transferred...\r");
+                            Thread.sleep(statusUpdatePeriodInMs);
                         }
-                        System.out.println("Upload succesful");
-                    } catch (Exception e) {
-                        if (!continueOnFail) {
-                            throw new BuildException(
-                                    "Error. The file that failed to upload was: "
-                                            + file.getName() + ": " + e, e);
-                        } else {
-                            System.err.println("The file " + file.getName()
-                                    + " failed to upload. Continuing...");
-                        }
+                        System.out.print(upload.getProgress()
+                                    .getBytesTransferred()
+                                    + "/"
+                                    + upload.getProgress()
+                                            .getTotalBytesToTransfer()
+                                    + " bytes transferred...\n");
+                    } else {
+                        upload.waitForCompletion();
                     }
+                    System.out.println("Upload of file " + includedFile + " succesful");
+                } catch (Exception e) {
+                    if (!continueOnFail) {
+                        throw new BuildException(
+                                "Error. The file that failed to upload was: "
+                                        + file.getName() + ": " + e, e);
+                    } else {
+                        System.err.println("The file " + file.getName()
+                                + " failed to upload. Continuing...");
+                    }
+                } finally {
+                	transferManager.shutdownNow();
                 }
-            } finally {
-                transferManager.shutdownNow(false);
             }
         }
     }
